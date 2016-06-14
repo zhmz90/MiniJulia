@@ -1,0 +1,11 @@
+prefix=/haplox/users/guo/Github/MiniJulia/usr
+exec_prefix=${prefix}
+libdir=/haplox/users/guo/Github/MiniJulia/usr/lib
+includedir=${prefix}/include
+
+Name: libunwind
+Description: libunwind base library
+Version: 1.1
+Libs: -L${libdir} -lunwind
+Libs.private: 
+Cflags: -I${includedir}

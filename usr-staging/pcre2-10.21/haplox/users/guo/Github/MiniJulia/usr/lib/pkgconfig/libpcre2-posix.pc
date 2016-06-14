@@ -1,0 +1,13 @@
+# Package Information for pkg-config
+
+prefix=/haplox/users/guo/Github/MiniJulia/usr
+exec_prefix=${prefix}
+libdir=/haplox/users/guo/Github/MiniJulia/usr/lib
+includedir=/haplox/users/guo/Github/MiniJulia/usr/include
+
+Name: libpcre2-posix
+Description: Posix compatible interface to libpcre2-8
+Version: 10.21
+Libs: -L${libdir} -lpcre2-posix
+Cflags: -I${includedir} 
+Requires.private: libpcre2-8

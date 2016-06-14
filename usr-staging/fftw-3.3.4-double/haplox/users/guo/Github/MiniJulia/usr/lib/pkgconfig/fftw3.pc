@@ -1,0 +1,11 @@
+prefix=/haplox/users/guo/Github/MiniJulia/usr
+exec_prefix=${prefix}
+libdir=/haplox/users/guo/Github/MiniJulia/usr/lib
+includedir=${prefix}/include
+
+Name: FFTW
+Description: fast Fourier transform library
+Version: 3.3.4
+Libs: -L${libdir} -lfftw3 
+Libs.private: -lm
+Cflags: -I${includedir}
