@@ -473,7 +473,6 @@ int jl_repl_raise_sigtstp(void)
     return raise(SIGTSTP);
 }
 
-
 static NOINLINE int true_main(int argc, char *argv[])
 {
     if (jl_core_module != NULL) {
@@ -546,67 +545,10 @@ static NOINLINE int true_main(int argc, char *argv[])
     return 0;
 }
 
-#ifndef _OS_WINDOWS_
 int main(int argc, char *argv[])
 {
     uv_setup_args(argc, argv); // no-op on Windows
-#else
 
-static void lock_low32() {
-#if defined(_P64) && defined(JL_DEBUG_BUILD)
-    // Wine currently has a that causes it to answer VirtualQuery incorrectly.
-    // See https://www.winehq.org/pipermail/wine-devel/2016-March/112188.html for details
-    int under_wine = is_running_under_wine();
-    // block usage of the 32-bit address space on win64, to catch pointer cast errors
-    char *const max32addr = (char*)0xffffffffL;
-    SYSTEM_INFO info;
-    MEMORY_BASIC_INFORMATION meminfo;
-    GetNativeSystemInfo(&info);
-    memset(&meminfo, 0, sizeof(meminfo));
-    meminfo.BaseAddress = info.lpMinimumApplicationAddress;
-    while ((char*)meminfo.BaseAddress < max32addr) {
-        size_t nbytes = VirtualQuery(meminfo.BaseAddress, &meminfo, sizeof(meminfo));
-        assert(nbytes == sizeof(meminfo));
-        if (meminfo.State == MEM_FREE) { // reserve all free pages in the first 4GB of memory
-            char *first = (char*)meminfo.BaseAddress;
-            char *last = first + meminfo.RegionSize;
-            char *p;
-            if (last > max32addr)
-                last = max32addr;
-            // adjust first up to the first allocation granularity boundary
-            // adjust last down to the last allocation granularity boundary
-            first = (char*)(((long long)first + info.dwAllocationGranularity - 1) & ~(info.dwAllocationGranularity - 1));
-            last = (char*)((long long)last & ~(info.dwAllocationGranularity - 1));
-            if (last != first) {
-                p = VirtualAlloc(first, last - first, MEM_RESERVE, PAGE_NOACCESS); // reserve all memory in between
-                assert(under_wine || p == first);
-            }
-        }
-        meminfo.BaseAddress += meminfo.RegionSize;
-    }
-#endif
-}
-int wmain(int argc, wchar_t *argv[], wchar_t *envp[])
-{
-    int i;
-    lock_low32();
-    for (i=0; i<argc; i++) { // write the command line to UTF8
-        wchar_t *warg = argv[i];
-        size_t len = WideCharToMultiByte(CP_UTF8, 0, warg, -1, NULL, 0, NULL, NULL);
-        if (!len) return 1;
-        char *arg = (char*)alloca(len);
-        if (!WideCharToMultiByte(CP_UTF8, 0, warg, -1, arg, len, NULL, NULL)) return 1;
-        argv[i] = (wchar_t*)arg;
-    }
-#endif
-#ifdef JULIA_ENABLE_THREADING
-    // We need to make sure this function is called before any reference to
-    // TLS variables. Since the compiler is free to move calls to
-    // `jl_get_ptls_states()` around, we should avoid referencing TLS
-    // variables in this function. (Mark `true_main` as noinline for this
-    // reason).
-    jl_set_ptls_states_getter(jl_get_ptls_states_static);
-#endif
     libsupport_init();
     parse_opts(&argc, (char***)&argv);
     if (lisp_prompt) {
@@ -618,7 +560,3 @@ int wmain(int argc, wchar_t *argv[], wchar_t *envp[])
     jl_atexit_hook(ret);
     return ret;
 }
-
-#ifdef __cplusplus
-}
-#endif
