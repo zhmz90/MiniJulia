@@ -7,3 +7,6 @@ MiniJulia based on official Julia code is a toy tool for Julians to learn how Ju
 ### Platform
 MiniJulia only support Linux.
 
+### Dependency
+LLVM: latest
+
